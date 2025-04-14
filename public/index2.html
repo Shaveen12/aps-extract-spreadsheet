@@ -6,10 +6,10 @@
   <link rel="icon" type="image/x-icon" href="https://cdn.autodesk.io/favicon.ico">
   <link rel="stylesheet" href="css/main.css">
 
-  <!-- jQuery for DOM manipualtion -->
+  <!-- jQuery for DOM manipulation -->
   <script src="js/libraries/jquery.min.js"></script>
 
-  <!-- Notification ballons -->
+  <!-- Notification balloons -->
   <script src="js/libraries/notify.min.js"></script>
 
   <!-- Autodesk Platform Services Viewer files -->
@@ -21,70 +21,51 @@
   <!-- XLS related libraries -->
   <script src="js/libraries/Blob.js"></script> <!-- https://github.com/eligrey/Blob.js -->
   <script src="js/libraries/FileSaver.min.js"></script> <!-- https://github.com/eligrey/FileSaver.js -->
-  <!-- <script src="js/libraries/xlsx.core.min.js"></script> https://github.com/SheetJS/js-xlsx -->
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.mini.min.js" type="text/javascript"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/shim.min.js" integrity="sha512-nPnkC29R0sikt0ieZaAkk28Ib7Y1Dz7IqePgELH30NnSi1DzG4x+envJAOHz8ZSAveLXAHTR3ai2E9DZUsT8pQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="js/ExportXLS.js"></script>
 
   <!-- Basic script for this page -->
   <script>
-    // for this sample, the URN is hardcoded
+    // Global variable to store the URN input by the user
     var sampleURN;
-
-    // wait until the document is ready...
+    
     $(document).ready(function () {
-      jQuery.ajax({
-        url: '/models',
-        success: function (models) {
-          if (models && models.length > 0) {
-            // Populate dropdown with models
-            var dropdown = $('#modelSelect');
-            models.forEach(function(model, index) {
-              dropdown.append($('<option></option>')
-                .attr('value', model.urn)
-                .attr('data-index', index)
-                .text(model.id || 'Model ' + (index + 1)));
-            });
-            
-            // Set initial model
-            sampleURN = models[0].urn;
-            showModel(sampleURN);
-            
-            // Update model when selection changes
-            dropdown.change(function() {
-              sampleURN = $(this).val();
-              showModel(sampleURN);
-              $('#modelId').text($(this).find('option:selected').text());
-            });
-            
-            // Set initial model ID display
-            $('#modelId').text(models[0].id || 'Model 1');
-            
-            // Enable download button
-            $('#downloadExcel').click(downloadExcel);
+      // Bind the "Load Model" button to retrieve the URN from the input field
+      $('#loadModel').click(function(){
+          var userUrn = $('#inputUrn').val().trim();
+          if (userUrn === '') {
+              $.notify("Please enter a URN", 'warn');
+              return;
           }
-        }
+          sampleURN = userUrn;
+          // Display the model using the provided URN (this call assumes your showModel function exists)
+          showModel(sampleURN);
       });
+      
+      // Bind the "Export to Excel" button to trigger XLS export
+      $('#downloadExcel').click(downloadExcel);
     });
 
-    // this will prepare and download the XLS file
+    // Function to prepare and download the XLS file using the user-provided URN
     function downloadExcel() {
+      if (!sampleURN) {
+         $.notify("No URN loaded. Please load a URN first.", "warn");
+         return;
+      }
       $('#downloadExcel').prop("disabled", true);
       getAccessToken(function (access_token, expires_in) {
-        ExportXLS.downloadXLSX(sampleURN, access_token, statusCallback /*Optional*/);
+        ExportXLS.downloadXLSX(sampleURN, access_token, statusCallback);
       });
     }
 
+    // Callback to update export status
     function statusCallback(completed, message) {
       $.notify(message, 'info');
       $('#downloadExcel').prop("disabled", !completed);
     }
 
-    // Get access token (use your data:read endpoint here)
-    // this sample is using client-side JavaScript only, so no
-    // back-end that authenticate with APS nor files, therefore
-    // is using files from another sample. On your implementation,
-    // you should replace this with your own Token endpoint
+    // Function to get an access token (replace with your own token endpoint as needed)
     function getAccessToken(callback) {
       jQuery.ajax({
         url: 'api/auth/token',
@@ -97,12 +78,16 @@
   </script>
 </head>
 <body>
-<div id="top">
-  This samples exports a model to Excel:
-  <select id="modelSelect"></select>
-  <span>Selected Model: <strong id="modelId"></strong></span>
-  <button id="downloadExcel">Export to Excel</button>
-</div>
-<div id="viewer"></div>
+  <div id="top">
+    <div>
+      <label for="inputUrn">Enter URN:</label>
+      <input type="text" id="inputUrn" placeholder="Paste your URN here">
+      <button id="loadModel">Load Model</button>
+    </div>
+    <div>
+      <button id="downloadExcel">Export to Excel</button>
+    </div>
+  </div>
+  <div id="viewer"></div>
 </body>
 </html>

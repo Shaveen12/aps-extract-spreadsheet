@@ -37,6 +37,8 @@ router.get('/api/auth/token', async function (req, res, next) {
 router.get('/models', async function (req, res) {
   let results = [];
   const objects = await listObjects();
+  console.log(objects);
+  
   for (const obj of objects) {
     if (obj.objectKey.endsWith('.rvt')) {
       results.push({
