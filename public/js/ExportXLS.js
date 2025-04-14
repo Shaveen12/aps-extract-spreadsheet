@@ -187,13 +187,21 @@ var ExportXLS = {
   },
 
   getAllElementsOnCategory: function (ids, category) {
+    // Guard clause: check if category exists and is an array
+    if (!category || !Array.isArray(category)) {
+      return; // Exit early if category is undefined or not an array
+    }
+    
     category.forEach(function (item) {
       if (typeof(item.objects) === 'undefined') {
-        if (!ids.indexOf(item.objectid) >= 0)
+        // Also fix the condition - the original had a logic error
+        if (ids.indexOf(item.objectid) === -1) {
           ids.push(item.objectid);
+        }
       }
-      else
+      else {
         ExportXLS.getAllElementsOnCategory(ids, item.objects);
+      }
     });
   },
 
